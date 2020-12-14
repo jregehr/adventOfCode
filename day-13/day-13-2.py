@@ -37,40 +37,44 @@ for x in range(0, len(busses)):
     abus = int(busses[x])
     busses[x] = abus
 
-print(busses)
-# theStep = 166439
+# print(busses)
+theTime = 15258950540
+theStep = 4774818883  # 924556795459165  # 421097
+theStep = 924556795459165  # 421097
 
 while duration == 0 or theCount < duration:
-  if theTime % theStep != 0:
-    print(f'theTime is {theTime}, stepping 1')
-    theTime += 1
-    continue
+  # if theTime % theStep != 0:
+  #   print(f'theTime is {theTime}, stepping 1')
+  #   theTime += 1
+  #   continue
 
   theCount += 1
   theTime += theStep
   outputs = []
 
-  # if theTime % 50000 == 0:
-  print(f'Time is {theTime}')
+  if theTime % 50000 == 0:
+    print(f'Time is {theTime}, {theCount} iterations')
 
   leTime = theTime
   for bus in range(0, len(busses)):
-    print(f'bus {bus}: {busses[bus]}')
+    # print(f'bus {bus}: {busses[bus]}')
     if busses[bus] == -1:
-      outputs.append(f'{leTime}: Bus {bus}, {busses[bus]}, is skipped')
+      # outputs.append(f'{leTime}: Bus {bus}, {busses[bus]}, is skipped')
+      pass
     else:
       # busNum = int(busses[bus])
 
-      if leTime < busses[bus]:
-        print('time is too low')
-        break
+      # if leTime < busses[bus]:
+      #   # print('time is too low')
+      #   break
 
       if leTime % busses[bus] == 0:
-        outputs.append(f'{leTime}: Bus {bus}, {busses[bus]} leaves now')
-        print(f'{leTime}: Bus {bus}, {busses[bus]} leaves now')
+        # outputs.append(f'{leTime}: Bus {bus}, {busses[bus]} leaves now')
+        # print(f'{leTime}: Bus {bus}, {busses[bus]} leaves now')
+        pass
       else:
-        print(f'{leTime}: bus does not leave now')
-        outputs.append(f'{leTime}: Bus {bus}, {busses[bus]} DOES NOT leave now')
+        # print(f'{leTime}: bus does not leave now')
+        # outputs.append(f'{leTime}: Bus {bus}, {busses[bus]} DOES NOT leave now')
         break
 
     leTime += 1
@@ -78,11 +82,11 @@ while duration == 0 or theCount < duration:
 
     if bus == len(busses) - 1:
       print(f'We did it. At time {theTime} the busses all leave when they are supposed to!')
-      # for output in outputs:
-      #   print(output)
+      for output in outputs:
+        print(output)
       sys.exit()
 
   # # if theTime % 50 == 0:
-  print('=== DEBUG ======================')
-  for output in outputs:
-    print(output)
+  # print('=== DEBUG ======================')
+  # for output in outputs:
+  #   print(output)
