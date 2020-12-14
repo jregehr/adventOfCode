@@ -28,7 +28,7 @@ for line in lines:
 print(f'Loaded {len(lines)} lines.')
 
 theCount = 0
-theStep = int(busses[0])
+theStep = 1  # int(busses[0])
 
 for x in range(0, len(busses)):
   if busses[x] == 'x':
@@ -37,6 +37,8 @@ for x in range(0, len(busses)):
     abus = int(busses[x])
     busses[x] = abus
 
+print(busses)
+# theStep = 166439
 
 while duration == 0 or theCount < duration:
   if theTime % theStep != 0:
@@ -46,27 +48,29 @@ while duration == 0 or theCount < duration:
 
   theCount += 1
   theTime += theStep
-  # outputs = []
+  outputs = []
 
-  if theTime % 50000 == 0:
-    print(f'Time is {theTime}')
+  # if theTime % 50000 == 0:
+  print(f'Time is {theTime}')
 
   leTime = theTime
   for bus in range(0, len(busses)):
-
+    print(f'bus {bus}: {busses[bus]}')
     if busses[bus] == -1:
-      # outputs.append(f'{leTime}: Bus {bus}, {busses[bus]}, is skipped')
-      pass
+      outputs.append(f'{leTime}: Bus {bus}, {busses[bus]}, is skipped')
     else:
       # busNum = int(busses[bus])
 
-      if theTime < busses[bus]:
+      if leTime < busses[bus]:
+        print('time is too low')
         break
 
       if leTime % busses[bus] == 0:
-        # outputs.append(f'{leTime}: Bus {bus}, {busses[bus]} leaves now')
-        pass
+        outputs.append(f'{leTime}: Bus {bus}, {busses[bus]} leaves now')
+        print(f'{leTime}: Bus {bus}, {busses[bus]} leaves now')
       else:
+        print(f'{leTime}: bus does not leave now')
+        outputs.append(f'{leTime}: Bus {bus}, {busses[bus]} DOES NOT leave now')
         break
 
     leTime += 1
@@ -79,6 +83,6 @@ while duration == 0 or theCount < duration:
       sys.exit()
 
   # # if theTime % 50 == 0:
-  # print('=== DEBUG ======================')
-  # for output in outputs:
-  #   print(output)
+  print('=== DEBUG ======================')
+  for output in outputs:
+    print(output)
