@@ -17,9 +17,7 @@ with open(file) as f:
 # print(lines)
 print(f'Loaded {len(lines)} lines.')
 
-memory = [0] * 55875874138
-# memory = [0] * 1048576
-
+memory = {}
 count = 0
 
 
@@ -55,12 +53,13 @@ for line in lines:
       for y in range(0, len(minimask)):
         addresses[x] = addresses[x].replace('X', minimask[y], 1)
 
-      memory[int(addresses[x], 2)] = numberToWrite
+      # memory[int(addresses[x], 2)] = numberToWrite
+      memory[addresses[x]] = numberToWrite
 
     addresss = []
 
 sum = 0
-for mem in memory:
+for mem in memory.values():
   sum += mem
 
 print(f'The sum of the memory is {sum}')
