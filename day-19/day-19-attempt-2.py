@@ -28,13 +28,68 @@ LINE_BREAK = '================================================'
 def debug_line_break(phase):
   debug_print(phase, LINE_BREAK)
 
+
+def nested(rulenumber, nested_rule):
+
+  if nested_rule.count(rulenumber) > 1:
+    debug_line_break(99)
+    debug_line_break(99)
+    debug_print(99, f'Rule {rulenumber} is too nested and I just cannot even! See: {nested_rule}')
+    debug_line_break(99)
+    debug_line_break(99)
+    sys.exit()
+
+  fixed = False
+
+  rule = nested_rule
+  if rule.strip().endswith(rulenumber):
+    # Rule like 8: 42 | 42 8
+    rule = rule.replace(rulenumber, '')
+    if '|' in rule:
+      ruleSplit = [bit.strip() for bit in rule.split('|')]
+      ruleSplit = [x.strip() for x in rule.split('|')]
+      if ruleSplit[0] == ruleSplit[1]:
+        # rule = f'(( {ruleSplit[0]} )|( {ruleSplit[0]}  {ruleSplit[0]} ))'
+        rule = f'(( 42 )+)'
+        # rule = f'(( 42 )+)'
+        fixed = True
+    else:
+      rule = f'(( {rule} )+)'
+      fixed = True
+
+  else:
+    # Rule is like 11: 42 31 | 42 11 31
+    parts = [x.strip() for x in rule.split('|')]
+    parts[0] = [x.strip() for x in parts[0].split(' ')]
+    parts[1] = [x.strip() for x in parts[1].split(' ')]
+    debug_print(0, f'0: {parts[0]}; 1: {parts[1]}')
+
+    if parts[0][0] == parts[1][0] and parts[0][len(parts[0])-1] == parts[1][len(parts[1])-1]:
+      # rule = f'(( {parts[0][0]} )( {parts[0][0]} )?( {parts[0][len(parts[0])-1]} )+)'
+      # rule = f'((( {parts[0][0]} )( {parts[0][0]} )?( {parts[0][len(parts[0])-1]} )) | (( {parts[0][0]} )( {parts[0][len(parts[0])-1]} )+) )'
+      # rule = f'( ( {parts[0][0]} {parts[0][len(parts[0])-1]} )|( {parts[0][0]} {parts[0][0]} {parts[0][len(parts[0])-1]} )|( {parts[0][0]} ( {parts[0][len(parts[0])-1]} +))     )'
+      rule = '(( 42 )( 31 )+)'
+      fixed = True
+
+  if fixed:
+    debug_line_break(99)
+    debug_print(99, f'Rule {rulenumber}: |{nested_rule}| becomes |{rule}')
+    debug_line_break(99)
+  else:
+    debug_line_break(99)
+    debug_line_break(99)
+    debug_print(99, f'Rule {rulenumber} is not something I understand! See: {rule}')
+    debug_line_break(99)
+    debug_line_break(99)
+    sys.exit()
+
+  return rule
+
+
 debug = 0
 
-
-
-
 ##########################################################################################
-# Attempt #1 - works on the small rule set but breaks on the big one.
+# Attempt #2
 ##########################################################################################
 
 index = 0
@@ -45,14 +100,22 @@ messages = []
 # Load the raw rules
 while index < len(lines):
   line = lines[index]
-  debug_print(0, line)
+  # debug_print(0, line)
   if line == "":
     index += 1
     break
 
   lineSplit = line.split(':')
-  rawRules[lineSplit[0]] = lineSplit[1]
+  rule_id = lineSplit[0]
+  rule = f'{lineSplit[1]} '.replace(' ', '  ')
+  if f' {rule_id} ' in rule:
+    rule = nested(rule_id, rule)
+  if '|' in rule:
+    rule = f'(( {rule} ))'.replace('|', ')|(')
+  rawRules[rule_id] = rule
   index += 1
+
+# sys.exit()
 
 # The rest are messages
 messages = lines[index:]
@@ -96,25 +159,13 @@ while finishedRules.get('0') is None:
 
     hasIts = [key for key, val in rawRules.items() if fKey in val]
     for hasIt in hasIts:
-      rawRule = rawRules[hasIt] + ' '
-      if not 'X' in rawRule:
-        rawRule = rawRule.replace('|', 'X')
-
+      rawRule = rawRules[hasIt]
       rawRule = rawRule.replace(f' {fKey} ', f' {finishedRules[fKey]} ')
-      rawRule = rawRule.replace(f' {fKey} ', f' {finishedRules[fKey]} ')
+      # rawRule = rawRule.replace(f' {fKey} ', f' {finishedRules[fKey]} ')
 
       if re.search('[0-9]', rawRule) is None:
-        # This one is fully matched. Bracket and pipe it.
-        if 'X' in rawRule and '|' in rawRule:
-          finishedRules[hasIt] = f'(({rawRule.replace("X", ") | (")}))'
-        elif 'X' in rawRule:
-          finishedRules[hasIt] = f'({rawRule.replace("X", " | ")})'
-        else:
-          # finishedRules[hasIt] = rawRule
-          finishedRules[hasIt] = f'{rawRule}'
-        # elif AB_ONLY.match(rawRule):
-        #   finishedRules[hasIt] = rawRule.replace(' ', '')
-        # else:
+        # This one is fully matched. Move it to finished.
+        finishedRules[hasIt] = rawRule
         rawRules.pop(hasIt)
       else:
         rawRules[hasIt] = rawRule
@@ -150,12 +201,11 @@ theOneRule = re.compile(ruleWillBe)
 matches = 0
 for m in messages:
   isMatch = theOneRule.match(m)
-  if isMatch == None:
-    print(f'{m} does not match the rule.')
-  else:
+  if isMatch is not None:
     matches += 1
-    print(f'{m} matches the rule: {isMatch.group(0)}')
-
+    print(f'{m} matches the rule:\n{isMatch.group(0)}\n')
+  else:
+    print(f'{m} does not match the rule.')
 
 
 print(f'{matches} messages match the rule.')
