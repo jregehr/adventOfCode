@@ -4,16 +4,18 @@ import csv
 import math
 import copy
 
-if len(sys.argv) != 2:
-  sys.exit('Please pass the file name as an argument.')
+# if len(sys.argv) != 2:
+#   sys.exit('Please pass the file name as an argument.')
 
-file = sys.argv[1]
+# file = sys.argv[1]
 
 # print(f'Loading {file}')
 
 # Read in the file
-with open(file) as f:
-  lines = [line.strip() for line in f]
+# with open(file) as f:
+#   lines = [line.strip() for line in f]
+
+lines = ['389125467']
 
 print(lines)
 print(f'Loaded {len(lines)} lines.')

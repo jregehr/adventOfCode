@@ -108,6 +108,12 @@ def move_current_cup(cups, currentCupLabel):
  #endregion
 
 
+sys.exit()
+# This solution wouldn't finish in a reasonable amount of time,
+# even on fast hardware.
+# I read the reddit and found a way better solutin that ran in 10 seconds ...
+# https://github.com/Leftfish/Advent-of-Code-2020/blob/main/23/d23.py
+
 currentCup = 0
 for move in range(0, 10000000):
   if move % 10000 == 0:
