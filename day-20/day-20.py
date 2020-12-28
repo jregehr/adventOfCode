@@ -18,7 +18,7 @@ with open(file) as f:
 print(f'Loaded {len(lines)} lines.')
 
 
-#region Debug Printers
+# region Debug Printers
 
 def debug_print(phase, output):
   if debug <= phase:
@@ -31,69 +31,32 @@ LINE_BREAK = '================================================'
 def debug_line_break(phase):
   debug_print(phase, LINE_BREAK)
 
-#endregion
+# endregion
 
-#region Functions
+# region Tile class
 
-
-# def rotate(tile):
-#   ## Do the work
-#   new_lines = [[0]*10]*10
-#   lines = tile[LINES]
-#   for x in range(9, -1, -1):
-#     for y in range(0, 10):
-#       new_lines[x][y] =
-
-#   debug_line_break(3)
-#   debug_print(3, f'Lines as they were:')
-#   for line in tile[LINES]:
-#     debug_print(3, line)
-#   debug_line_break(3)
-#   debug_print(3, f'Lines as they are now, rotated:')
-#   for line in new_lines:
-#     debug_print(3, line)
-#   debug_line_break(3)
-
-#   tile[LINES] = new_lines
-
-
-def reverse(tile):
-
-  debug_line_break(2)
-  debug_print(2, f'Lines as they were:')
-  for line in tile[LINES]:
-    debug_print(2, line)
-
-  ## Do the work
-  for x in range(len(tile[LINES])):
-    tile[LINES][x] = tile[LINES][x][::-1]
-
-  debug_line_break(2)
-  debug_print(2, f'Lines as they are now, reversed:')
-  for line in tile[LINES]:
-    debug_print(2, line)
-  debug_line_break(2)
-
-
-def flip(tile):
-  new_lines = list(reversed(tile[LINES]))
-
-  debug_line_break(1)
-  debug_print(1, f'Lines as they were:')
-  for line in tile[LINES]:
-    debug_print(1, line)
-  debug_line_break(1)
-  debug_print(1, f'Lines as they are now, flipped:')
-  for line in new_lines:
-    debug_print(1, line)
-  debug_line_break(1)
-
-  tile[LINES] = new_lines
 
 class Tile:
-  def __init__(self, id, rows):
+
+  TILE_LINE = 'Tile '
+  EDGE_LEFT = 0
+  EDGE_TOP = 1
+  EDGE_RIGHT = 2
+  EDGE_BOTTOM = 3
+
+  CORNER_MATCHES = 2
+  EDGE_MATCHES = 3
+  MIDDLE_MATCHES = 4
+
+  PLACEMENT_LEFT = 0
+  PLACEMENT_TOP = 1
+  PLACEMENT_RIGHT = 2
+  PLACEMENT_BOTTOM = 3
+  PLACEMENT_MIDDLE = 4
+
+  def __init__(self, id):
     self._id = id
-    self._rows = rows
+    self._rows = []
     self._matches = [None]*4
     self._edges = [None]*4
     self._match_sides = [None]*4
@@ -101,100 +64,237 @@ class Tile:
     self._placed = False
 
   @property
+  def id(self):
+    return self._id
+
+  @property
   def rows(self):
     return self._rows
+
+  @rows.setter
+  def rows(self, value):
+    self._rows = value
+    if len(self._rows) == 10:
+      self.__find_edges()
+
+  def add_row(self, row):
+    self._rows.append(row)
+    if len(self._rows) == 10:
+      self.__find_edges()
 
   @property
   def matches(self):
     return self._matches
 
+  @matches.setter
+  def matches(self, value):
+    self._matches = value
+
   @property
   def edges(self):
     return self._edges
+
+  @edges.setter
+  def edges(self, value):
+    self._edges = value
 
   @property
   def match_sides(self):
     return self._match_sides
 
+  @match_sides.setter
+  def match_sides(self, value):
+    self._match_sides = value
+
   @property
   def matched_sides(self):
     return self._matched_sides
+
+  @matched_sides.setter
+  def matched_sides(self, value):
+    self._matched_sides = value
 
   @property
   def placed(self):
     return self._placed
 
+  @placed.setter
+  def placed(self, value):
+    self._placed = value
 
+  def print(self, debug_level=99):
+    debug_print(debug_level, f'--- tile {self._id} -------------------------------------')
+    for line in self._rows:
+      debug_print(debug_level, line)
+    debug_print(debug_level, f'---------------------------------------------------')
+    debug_print(debug_level, f'Edges: {self._edges}')
+    debug_print(debug_level, f'Matches: {self._matches}')
+    debug_print(debug_level, f'Match sides: {self._match_sides}')
+    debug_print(debug_level, f'Matched sides: {self._matched_sides}')
+    debug_print(debug_level, f'Placed: {self._placed}')
+    debug_print(debug_level, f'---------------------------------------------------')
 
+  def borderless(self):
+    result = []
+    for row in range(1, len(self._rows)-1):
+      result.append(self._rows[row][1:9])
+    return result
 
+  def __repr__(self):
+    return f'{self._id}: Placed({self._placed}), Edges {self._edges}'
 
+  def __str__(self):
+    return f'Tile {self._id}: Placed({self._placed}), Matches: {self._matches}, Edges {self._edges}'
 
-def print_tile(tile, debug_level=99):
-  debug_print(debug_level, f'--- tile {tile[ID]} -------------------------------------')
-  for line in tile[LINES]:
-    debug_print(debug_level, line)
-  debug_print(debug_level, f'---------------------------------------------------')
-  debug_print(debug_level, f'Edges: {tile[EDGES]}')
-  debug_print(debug_level, f'Matches: {tile[MATCHES]}')
-  debug_print(debug_level, f'Match sides: {tile[MATCH_SIDES]}')
-  debug_print(debug_level, f'Matched sides: {tile[MATCHED_SIDES]}')
-  debug_print(debug_level, f'Placed: {tile[PLACED]}')
-  debug_print(debug_level, f'---------------------------------------------------')
+  def __find_edges(self):
+    self._edges[Tile.EDGE_TOP] = self._rows[0]
+    self._edges[Tile.EDGE_BOTTOM] = self._rows[9][::-1]
+    left = ''
+    right = ''
+    for x in self._rows:
+      # left should be bottom to top
+      left = x[0] + left
+      # right should be top to bottom
+      right += x[-1]
+    self._edges[Tile.EDGE_LEFT] = left
+    self._edges[Tile.EDGE_RIGHT] = right
 
+  def check_match(self, tile1):
+    if self._id == tile1.id:
+      # don't match myself.
+      return
 
-def find_edges(tile):
-  tile[EDGES][EDGE_TOP] = tile[LINES][0]
-  tile[EDGES][EDGE_BOTTOM] = tile[LINES][9]
-  left = ''
-  right = ''
-  for x in tile[LINES]:
-    # left should be bottom to top
-    left = x[0] + left
-    # right should be top to bottom
-    right += x[-1]
-  tile[EDGES][EDGE_LEFT] = left
-  tile[EDGES][EDGE_RIGHT] = right
+    for x in range(0, 4):
+      for y in range(0, 4):
+        if self._edges[x] == tile1.edges[y] or self._edges[x][::-1] == tile1.edges[y]:
+          self._matches[x] = tile1.id
+          self._matched_sides[x] = y
+          tile1.matches[y] = self._id
+          tile1.match_sides[y] = x
+          return
 
+  def adjust_to_match(self, matching_tile_id, matching_edge, matching_side, placement):
+    # matching_tile_id - the ID of the tile to adjust to
+    # matching_edge    - the edge pixles of the tile to adjust to
+    # matching_side    - the side that needs to match the tile to adjust to
+    if matching_tile_id == self._matches[matching_side]:
+      # already rotated the right way
+      if placement == Tile.PLACEMENT_TOP and self._matches[Tile.EDGE_BOTTOM] is None:
+        self.flip()
+      return
 
-def check_match(tile0, tile1):
-  if tile0[ID] == tile1[ID]:
-    return
-
-  for x in range(0, 4):
-    for y in range(0, 4):
-      if tile0[EDGES][x] == tile1[EDGES][y] or tile0[EDGES][x][::-1] == tile1[EDGES][y]:
-        tile0[MATCHES][x] = tile1[ID]
-        tile0[MATCH_SIDES][x] = y
-        tile1[MATCHES][y] = tile0[ID]
-        tile1[MATCH_SIDES][y] = x
+    # flip or reverse the tile
+    match_side = self._matches.index(matching_tile_id)
+    if abs(matching_side - match_side) == 2:
+      if matching_side in [ Tile.EDGE_LEFT, Tile.EDGE_RIGHT ]:
+        self.rotate()
+        self.rotate()
+        if matching_edge != self._edges[matching_side]:
+          # on the right side, but need to flip
+          self.flip()
+        return
+      else:
+        self.flip()
         return
 
+    # rotate one or three times
+    self.rotate()
+    if matching_tile_id != self._matches[matching_side]:
+      self.rotate()
+      self.rotate()
+    if matching_edge != self._edges[matching_side]:
+      if matching_side in [ Tile.EDGE_LEFT, Tile.EDGE_RIGHT ]:
+        self.flip()
 
-def find_edge_match(edge, tile):
-  debug_print(4, f'Edge: {edge}, Tile {tile[ID]} Edges: {tile[EDGES]}')
-  for x in range(0, 4):
-    if tile[EDGES][x] is not None and (edge == tile[EDGES][x] or edge[::-1] == tile[EDGES][x]):
-      tile[MATCHED_SIDES][x] = True
-      return x
+    return
 
-  return None
+  def rotate(self):
+    debug_print(99, 'rotate')
+    debug_line_break(3)
+    debug_print(3, f'Lines as they were:')
+    for row in self._rows:
+      debug_print(3, row)
+
+    new_rows = list(zip(*self._rows[::-1]))
+    for x in range(len(new_rows)):
+      new_rows[x] = ''.join(new_rows[x])
+
+    self._rows = new_rows
+    self._edges = self.__rotate_edge_part(self._edges)
+    self._matches = self.__rotate_edge_part(self._matches)
+    self._match_sides = self.__rotate_edge_part(self._match_sides)
+    self._matched_sides = self.__rotate_edge_part(self._matched_sides)
+
+    debug_line_break(3)
+    debug_print(3, f'Lines as they are now, rotated:')
+    for row in self._rows:
+      debug_print(3, row)
+    debug_line_break(3)
+  
+  def __rotate_edge_part(self, edge_part):
+    return [ edge_part[3], edge_part[0], edge_part[1], edge_part[2] ]
+
+  # def reverse(self):
+  #   debug_print(99, 'reverse')
+  #   debug_line_break(6)
+  #   debug_print(6, f'REVERSE: Lines as they were:')
+  #   for row in self._rows:
+  #     debug_print(6, row)
+
+  #   # Do the work
+  #   for x in range(len(self._rows)):
+  #     self._rows[x] = self._rows[x][::-1]
+
+  #   self.__reverse_edges()
+  #   self._matches = self.__reverse_edge_part(self._matches)
+  #   self._match_sides = self.__reverse_edge_part(self._match_sides)
+  #   self._matched_sides = self.__reverse_edge_part(self._matched_sides)
+
+  #   debug_line_break(6)
+  #   debug_print(6, f'Lines as they are now, reversed:')
+  #   for row in self._rows:
+  #     debug_print(6, row)
+  #   debug_line_break(6)
+
+  # def __reverse_edge_part(self, edge_part):
+  #   return [ edge_part[2], edge_part[1], edge_part[0], edge_part[3] ]
+
+  # def __reverse_edges(self):
+  #   self._edges = [ self._edges[2], self._edges[1][::-1], self._edges[0], self._edges[3][::-1] ]
+  #   # self._edges = [ self._edges[2], self._edges[1], self._edges[0], self._edges[3] ]
 
 
-def find_match(edge, tiles):
-  for tile in tiles:
-    # if tile[PLACED]:
-    #   continue
-    found_edge = find_edge_match(edge, tile)
-    if found_edge is not None:
-      return tile, found_edge
+  def flip(self):
+    debug_print(99, 'flip')
+    new_rows = list(reversed(self._rows))
 
-  return None, None
+    self.__flip_edges()
+    self._matches = self.__flip_edge_part(self._matches)
+    self._match_sides = self.__flip_edge_part(self._match_sides)
+    self._matched_sides = self.__flip_edge_part(self._matched_sides)
 
+    debug_line_break(5)
+    debug_print(5, f'FLIP: Lines as they were:')
+    for row in self._rows:
+      debug_print(5, row)
+    debug_line_break(5)
+    debug_print(5, f'Lines as they are now, flipped:')
+    for row in new_rows:
+      debug_print(5, row)
+    debug_line_break(5)
 
-def update_matched_edge(edge, tile):
-  for x in range(0, 4):
-    if tile[EDGES][x] is not None and (edge == tile[EDGES][x] or edge[::-1] == tile[EDGES][x]):
-      tile[MATCHED_SIDES][x] = True
+    self._rows = new_rows
+
+  def __flip_edge_part(self, edge_part):
+    return [ edge_part[0], edge_part[3], edge_part[2], edge_part[1] ]
+
+  def __flip_edges(self):
+    # self._edges = [ self._edges[0][::-1], self._edges[3], self._edges[2][::-1], self._edges[1] ]
+    self._edges = [ self._edges[0], self._edges[3], self._edges[2], self._edges[1] ]
+
+# endregion
+
+# region Functions
 
 
 def opposite_edge(edgeNumber):
@@ -203,91 +303,65 @@ def opposite_edge(edgeNumber):
   return edgeNumber + 2
 
 
-def find_tiles(tiles, matches):
+def find_tiles_of_type(tiles, matches):
   found_tiles = []
   for tile in tiles:
-    if len(list(filter(None, tile[MATCHES]))) == matches:
+    if len(list(filter(None, tile.matches))) == matches:
       found_tiles.append(tile)
 
   return found_tiles
 
+def searching_for_corner(grid_size, x, y):
+  if y == 0 or y+1 == grid_size:
+    if x == 0 or x+1 == grid_size:
+      return True
 
-def first_unmatched_edge(tile):
-  if tile[MATCHES][EDGE_LEFT] is not None and not tile[MATCHED_SIDES][EDGE_LEFT]:
-    return tile[EDGES][EDGE_LEFT]
-  if tile[MATCHES][EDGE_TOP] is not None and not tile[MATCHED_SIDES][EDGE_TOP]:
-    return tile[EDGES][EDGE_TOP]
-  if tile[MATCHES][EDGE_RIGHT] is not None and not tile[MATCHED_SIDES][EDGE_RIGHT]:
-    return tile[EDGES][EDGE_RIGHT]
-  return tile[EDGES][EDGE_BOTTOM]
+  return False
+
+def searching_for_edge(grid_size, x, y):
+  if searching_for_corner(grid_size, x, y):
+    return False
+
+  return y == 0 or y+1 == grid_size or x == 0 or x+1 == grid_size
+
+def calc_placement(grid_size, x, y):
+  if y == 0:
+    return Tile.PLACEMENT_TOP
+  if y+1 == grid_size:
+    Tile.PLACEMENT_BOTTOM
+  if x == 0:
+    return Tile.PLACEMENT_LEFT
+  if x+1 == grid_size:
+    return Tile.PLACEMENT_RIGHT
+  return Tile.PLACEMENT_MIDDLE
 
 
-def check_unmatched_edge(tile, edgeNumber):
-  if not tile[MATCHED_SIDES][edgeNumber]:
-    return tile[EDGES][edgeNumber]
-
-  return None
-
-#endregion
-
-#region Constants
-
-
-ID = 'tileId'
-LINES = 'lines'
-TILE_LINE = 'Tile '
-EDGES = 'edges'
-MATCHES = 'matches'
-MATCH_SIDES = 'match-sides'
-MATCHED_SIDES = 'matched-sides'
-PLACED = 'placed'
-EDGE_LEFT = 0
-EDGE_TOP = 1
-EDGE_RIGHT = 2
-EDGE_BOTTOM = 3
-
-CORNER_MATCHES = 2
-EDGE_MATCHES = 3
-MIDDLE_MATCHES = 4
-
-#endregion
+# endregion
 
 ##################################################################
 ##################################################################
-debug = 6
+debug = 7
 ##################################################################
 ##################################################################
 
-#region Data loading
+# region Data loading
 
 tiles = []
-tile = {}
 
 tileId = ""
 for x in range(len(lines)):
   line = lines[x]
-  if line.startswith(TILE_LINE):
-    tile = {}
+  if line.startswith(Tile.TILE_LINE):
     tileId = line[5:9]
     debug_print(0, f'tileId: {tileId}')
-    tile[ID] = tileId
-    tile[LINES] = []
-    tile[MATCHES] = [None]*4
-    tile[EDGES] = [None]*4
-    tile[MATCH_SIDES] = [None]*4
-    tile[MATCHED_SIDES] = [False]*4
-    tile[PLACED] = False
+    tile = Tile(tileId)
     tiles.append(tile)
     continue
 
   if line == '':
     continue
 
-  tile[LINES].append(line)
-# append the last tile
-
-for tile in tiles:
-  find_edges(tile)
+  tile.add_row(line)
 
 print(f'There are {len(tiles)} tiles.')
 
@@ -297,97 +371,124 @@ solution = [[-1 for i in range(int(grid_size))] for j in range(int(grid_size))]
 
 debug_print(99, f'solution grid: {solution}')
 
-#endregion
+for tile in tiles:
+  tile.print(1)
+
+
+# endregion
 
 for tile0 in tiles:
   for tile1 in tiles:
-    check_match(tile0, tile1)
+    tile0.check_match(tile1)
 
-# for tile in tiles:
-#   print_tile(tile, 4)
+corners = find_tiles_of_type(tiles, Tile.CORNER_MATCHES)
+edges = find_tiles_of_type(tiles, Tile.EDGE_MATCHES)
+middles = find_tiles_of_type(tiles, Tile.MIDDLE_MATCHES)
 
-corners = find_tiles(tiles, CORNER_MATCHES)
-edges = find_tiles(tiles, EDGE_MATCHES)
-middles = find_tiles(tiles, MIDDLE_MATCHES)
-
-debug_line_break(5)
-debug_print(5, 'Corners:')
-for tile in corners:
-  print_tile(tile, 5)
-
-# debug_line_break(3)
-# debug_print(3, 'Edges:')
-# for tile in edges:
-#   print_tile(tile, 3)
-
-solution[0][0] = corners[0]
-corners[0][PLACED] = True
-
-# debug_line_break(99)
-# debug_print(99, 'Top Corner')
-# print_tile(corners[0])
-
-# find the middle of the top row
-edge_to_match = first_unmatched_edge(solution[0][0])
-for x in range(1, grid_size-1):
-  debug_print(5, f'Top Row, tile {x}')
-  tile, edge = find_match(edge_to_match, edges)
-  if tile is not None:
-    solution[0][x] = tile
-    tile[PLACED] = True
-    edge_to_match = check_unmatched_edge(tile, opposite_edge(edge))
-    if edge_to_match is None:
-      debug_print(99, 'Something bwoke - first row edge matching')
-      sys.exit()
-  else:
-    debug_print(4, 'Something bwoke')
-
-# edge_to_match = first_unmatched_edge(solution[0][grid_size-2])
-solution[0][grid_size-1], edge = find_match(edge_to_match, corners)
-update_matched_edge(edge_to_match, solution[0][grid_size-2])
-
-debug_line_break(6)
-debug_print(6, 'Solution:')
-for y in range(0, 3):
-  for x in range(0, 3):
-    tile = solution[y][x]
-    if tile == 0:
-      tile = 'None'
-    elif isinstance(tile, dict):
-      tile = f'Tile {tile[ID]}'
-    debug_print(6, f'SOLN {x},{y}: {tile}')
+debug_line_break(4)
+debug_print(4, "All Tiles")
+if debug <= 4:
+  for tile in tiles:
+    print(tile)
 
 
-# following rows
-for y in range(1, grid_size):
+debug_line_break(4)
+debug_print(4, "Corner Tiles")
+if debug <= 4:
+  for tile in corners:
+    # tile.print()
+    print(tile)
+
+# set up top corner tile
+topCorner = corners[0]
+print(f'starter  {topCorner}')
+if topCorner.matches[Tile.EDGE_BOTTOM] is None:
+  topCorner.flip()
+# while topCorner.matches[0] != None or topCorner.matches[1] != None:
+#   topCorner.rotate()
+
+solution[0][0] = topCorner
+topCorner.placed = True
+
+print(f'adjusted {topCorner}')
+
+previous_tile = topCorner
+for y in range(grid_size):
   for x in range(grid_size):
-    upper_edge_match = first_unmatched_edge(solution[y-1][x])
-    look_in = middles
-    if y+1 == grid_size and (x == 0 or x+1 == grid_size):
-      look_in = corners
-    elif y+1 == grid_size or (x == 0 or x+1 == grid_size):
-      look_in = edges
-    tile, edge = find_match(upper_edge_match, look_in)
-    if tile:
-      solution[y][x] = tile
-      tile[PLACED] = True
-      update_matched_edge(upper_edge_match, solution[y-1][x])
+    if y == 0 and x == 0:
+      #top right is already done.
+      continue
+      
+    # search_list = middles
+    # if searching_for_corner(grid_size, x, y):
+    #   search_list = corners
+    # elif searching_for_edge(grid_size, x, y):
+    #   search_list = edges
+    
+    if x == 0:
+      match_edge = Tile.EDGE_BOTTOM
+      previous_tile = previous_tile = solution[y-1][0]
+    else:
+      match_edge = Tile.EDGE_RIGHT
+  
+    search_tile_id = previous_tile.matches[match_edge]
+    # found_tile = next(t for t in search_list if t.id == search_tile_id)
+    found_tile = next(t for t in tiles if t.id == search_tile_id)
+    print(f'found    {found_tile}')
+    found_tile.adjust_to_match(previous_tile.id, previous_tile.edges[match_edge], opposite_edge(match_edge), calc_placement(grid_size, x, y))
+    if y > 0 and x > 0 and x+1 < grid_size:
+      # middle tile, check top and bottom for flip
+      if found_tile.edges[Tile.EDGE_TOP] != solution[y-1][x].edges[Tile.EDGE_BOTTOM]:
+        found_tile.flip()
+    print(f'adjusted {found_tile}')
 
-    # left_upper_edge_match = first_unmatched_edge(solution[x-1][0])
-    # tile, edge = find_match(left_upper_edge_match, edges)
-    # solution[x][0] = tile
-    # right_upper_edge_match = first_unmatched_edge(solution[x-1][grid_size-1])
-    # tile, edge = find_match(right_upper_edge_match, edges)
-    # solution[x][grid_size-1] = tile
-
-
-debug_line_break(99)
+    solution[y][x] = found_tile
+    previous_tile = found_tile
+    found_tile.placed = True
+    
 debug_print(99, 'FINAL Solution:')
-for y in range(0, 3):
-  for x in range(0, 3):
+for y in range(grid_size):
+  for x in range(grid_size):
     tile = solution[y][x]
-    if tile == 0:
+    if tile == -1:
       tile = 'None'
-    elif isinstance(tile, dict):
-      tile = f'Tile {tile[ID]}'
+    
     print(f'SOLN {x},{y}: {tile}')
+   
+debug_print(99,'\n\n')
+debug_line_break(99)
+debug_print(99, 'FINAL TILES')
+for y in range(grid_size):
+  for ry in range(len(topCorner.rows)):
+    if ry == 0:
+      for x in range(grid_size):
+        print(solution[y][x].id, end='       ')
+        if x+1 == grid_size:
+          print('')
+    for x in range(grid_size):
+      end = '' if x+1 == grid_size else ' '
+      print(solution[y][x].rows[ry], end=end)
+    print('')
+  print('')
+
+debug_print(99,'\n\n')
+debug_line_break(99)
+debug_print(99, 'FINAL IMAGE')
+
+image_array = [[-1 for i in range(int(grid_size))] for j in range(int(grid_size))]
+image = ''
+for y in range(grid_size):
+  for x in range(grid_size):
+    image_array[y][x] = solution[y][x].borderless()
+
+for y in range(grid_size):
+  for ry in range(len(image_array[0][0])):
+    for x in range(grid_size):
+      end = '\n' if x+1 == grid_size else ''
+      print(image_array[y][x][ry], end=end)
+      image += image_array[y][x][ry] + end
+
+debug_print(99,'\n\n')
+debug_line_break(99)
+debug_print(99, 'FINAL IMAGE image')
+print(image)
