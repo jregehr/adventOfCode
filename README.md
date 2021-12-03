@@ -1,3 +1,3 @@
-# adventOfCode2020
-My code for https://adventofcode.com/2020
+# adventOfCode
+My code for https://adventofcode.com/
 
