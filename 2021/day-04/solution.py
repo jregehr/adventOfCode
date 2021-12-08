@@ -14,6 +14,7 @@ with open(file) as f_input:
 # print(lines)
 print(f'Loaded {len(lines)} lines.')
 
+#region BingoCard
 
 class BingoCard:
 
@@ -102,6 +103,7 @@ class BingoCard:
       result += '\n'
     return result
 
+# endregion
 
 # prep variables
 
