@@ -9,7 +9,8 @@ print(f'Loading {file}')
 
 ## Read in the file
 with open(file) as f_input:
-  lines = f_input.readlines()
+  lines = [line.strip() for line in f_input]
+
 
 # print(lines)
 print(f'Loaded {len(lines)} lines.')
