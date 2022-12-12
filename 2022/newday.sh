@@ -11,7 +11,7 @@ dayName="day-${dayNum}"
 cookie="session=53616c7465645f5fab233359295ffb97e67b2d6a1df61f5d379f76d28f4b85b612e79cdca2f66c239960fbe5c2ef1edb59e1124f8e700a173cd89c07249e626c"
 
 mkdir -p $dayName
-touch $dayName/README.md
+# touch $dayName/README.md
 touch $dayName/small.txt
 touch $dayName/input.txt
 
